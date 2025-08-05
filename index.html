@@ -841,15 +841,13 @@
         let secondsRecording = 0;
         let audioBlob = null;
         let allApplications = [];
+        let stream;
 
         // Initialize Supabase connection
         async function initSupabase() {
             try {
-                // Test connection by fetching a dummy record
-                const { data, error } = await supabase
-                    .from('applications')
-                    .select('*')
-                    .limit(1);
+                // Test connection using auth.signInAnonymously()
+                const { error } = await supabase.auth.signInAnonymously();
                 
                 if (error) {
                     console.error('فشل الاتصال بـ Supabase:', error);
@@ -1028,24 +1026,33 @@
 
         async function startRecording() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.start();
+                // Check if we already have a stream
+                if (!stream) {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+                
+                // Reset chunks
+                audioChunks = [];
+                
+                // Create new MediaRecorder with supported MIME type
+                const options = { mimeType: 'audio/webm' };
+                mediaRecorder = new MediaRecorder(stream, options);
                 
                 mediaRecorder.ondataavailable = e => {
-                    audioChunks.push(e.data);
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
                 };
                 
                 mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     const audioUrl = URL.createObjectURL(audioBlob);
                     const audioPreview = document.getElementById('audioPreview');
                     audioPreview.src = audioUrl;
                     audioPreview.style.display = 'block';
-                    
-                    // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
                 };
+                
+                mediaRecorder.start();
                 
                 document.getElementById('startRecord').disabled = true;
                 document.getElementById('stopRecord').disabled = false;
@@ -1064,7 +1071,7 @@
         }
 
         function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
                 clearInterval(recordingInterval);
                 document.getElementById('startRecord').disabled = false;
@@ -1263,13 +1270,24 @@
 
         // Initialize Supabase connection when page loads
         document.addEventListener('DOMContentLoaded', async () => {
-            await initSupabase();
-            
             // Show welcome message
             setTimeout(() => {
                 showNotification('مرحباً بك في WorkWise - منصة التوظيف العالمية!', 'success');
             }, 1000);
+            
+            // Initialize Supabase
+            await initSupabase();
+            
+            // Pre-request microphone permissions
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Immediately stop tracks to release the microphone
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            } catch (err) {
+                console.log('Microphone permission pre-request failed, will request later');
+            }
         });
     </script>
 </body>
-                                                    </html>
+                            </html>
