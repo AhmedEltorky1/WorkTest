@@ -1,182 +1,1275 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>WorkWise | قدم على وظيفة</title>
-  <style>
-    body {
-      font-family: 'Tahoma', sans-serif;
-      background: #f9fafb;
-      color: #1e293b;
-      margin: 0;
-      padding: 0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkWise - منصة التوظيف العالمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #2a5298;
+            --secondary-color: #1e3c72;
+            --accent-color: #4CAF50;
+            --danger-color: #f44336;
+            --warning-color: #ff9800;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
 
-    header {
-      background: #1e3a8a;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
 
-    .container {
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
+        body {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
 
-    .job {
-      border: 1px solid #cbd5e1;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      background: white;
-    }
+        .logo-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.05;
+            z-index: -1;
+            width: 400px;
+            height: 400px;
+            background: url('data:image/svg+xml,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M15 15 L35 15 L45 35 L55 15 L85 15 L85 85 L60 85 L60 50 L50 70 L40 50 L40 85 L15 85 Z" fill="white" stroke="white" stroke-width="2"/></svg>') no-repeat center;
+            background-size: contain;
+        }
 
-    .job h2 {
-      color: #1d4ed8;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
 
-    .apply-btn {
-      background: #1d4ed8;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
+        .header {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-    .form-container {
-      display: none;
-      border: 2px dashed #1e3a8a;
-      padding: 20px;
-      margin-top: 20px;
-      border-radius: 10px;
-      background: #e0f2fe;
-    }
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
 
-    input, textarea, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      border: 1px solid #cbd5e1;
-    }
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
 
-    button[type="submit"] {
-      background: #059669;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  </style>
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .job-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(42, 82, 152, 0.2);
+        }
+
+        .job-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .job-details {
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .job-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        .record-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .record-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .record-btn.start {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .record-btn.stop {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .record-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .admin-panel {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .applicant-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .applicant-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .applicant-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--danger-color);
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1100;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.error {
+            background: var(--danger-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .connection-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .applicant-actions {
+                flex-direction: column;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .form-control {
+                padding: 10px;
+            }
+
+            .btn {
+                padding: 10px 15px;
+                min-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>مرحبا بك في WorkWise</h1>
-    <p>اختر العرض المناسب وقدّم الآن</p>
-  </header>
+    <div class="logo-bg"></div>
+    
+    <!-- Notifications -->
+    <div id="notification" class="notification"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">W</div>
+                WorkWise
+            </div>
+            <p style="color: #666; font-size: 1.1rem;">منصة التوظيف العالمية - اتصل بأفضل الفرص حول العالم</p>
+            
+            <div class="nav-buttons">
+                <button class="btn btn-primary" onclick="showSection('jobs')">الوظائف المتاحة</button>
+                <button class="btn btn-secondary" onclick="showSection('login')">لوحة الموظفين</button>
+            </div>
+        </header>
 
-  <div class="container">
+        <!-- Jobs Section -->
+        <div id="jobs" class="section active">
+            <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 30px; font-size: 2rem;">الوظائف المتاحة عالمياً</h2>
+            
+            <!-- Concentrix Job -->
+            <div class="job-card">
+                <h3 class="job-title">Customer Service Representatives - Concentrix</h3>
+                <div class="job-meta">
+                    <span class="job-meta-item">📍 مصر (6 أكتوبر - المعادي)</span>
+                    <span class="job-meta-item">🏢 عمل مكتبي</span>
+                    <span class="job-meta-item">💰 14,000 - 19,000 جنيه</span>
+                </div>
+                <div class="job-details">
+                    <p><strong>المتطلبات:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>إتقان اللغة الإنجليزية B2 أو C1</li>
+                        <li>خريجين فقط ومصريين الجنسية</li>
+                        <li>الراتب من 14,000 إلى 19,000 جنيه + بدل ليلي + تدريب مدفوع</li>
+                        <li>نظام الورديات دوراني 24/7 (ليلي بشكل أساسي)</li>
+                        <li>9 ساعات عمل شاملة ساعة راحة</li>
+                        <li>تأمين طبي واجتماعي إجباري</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="applyForJob('Concentrix Customer Service')">تقدم الآن</button>
+            </div>
 
-    <!-- Offer 1 -->
-    <div class="job">
-      <h2>🇬🇧 English Customer Service – Concentrix</h2>
-      <p>الخريجين فقط - مصريين فقط | المرتب: من 14,000 إلى 19,000 جنيه<br>
-      نظام شفتات متغيرة (معظمها ليلي) - تأمين طبي واجتماعي - تدريب مدفوع</p>
-      <p>يرجى إرسال رسالة صوتية باللغة الإنجليزية لمدة دقيقة تقدم فيها نفسك.</p>
-      <button class="apply-btn" onclick="showForm('English Customer Service – Concentrix')">قدّم الآن</button>
+            <!-- Proof Health Job -->
+            <div class="job-card">
+                <h3 class="job-title">Customer Service - Proof Health السعودية</h3>
+                <div class="job-meta">
+                    <span class="job-meta-item">🌐 عمل عن بُعد</span>
+                    <span class="job-meta-item">💰 8,000 جنيه</span>
+                    <span class="job-meta-item">⏰ 6 أيام أسبوعياً</span>
+                </div>
+                <div class="job-details">
+                    <p><strong>المتطلبات:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>خبرة سابقة في خدمة العملاء أو المبيعات (سنتين على الأقل)</li>
+                        <li>مهارات تواصل ممتازة وقدرة على التعامل مع العملاء</li>
+                        <li>القدرة على العمل تحت الضغط</li>
+                        <li>توفر لاب توب واتصال إنترنت مستقر</li>
+                        <li>الراتب: 8,000 جنيه (5,000 ثابت + 3,000 تارجت شهري)</li>
+                        <li>ساعات العمل: 6 أيام أسبوعياً، 9 ساعات يومياً</li>
+                        <li>يُفضل من يتقن اللهجة الخليجية</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="applyForJob('Proof Health Customer Service')">تقدم الآن</button>
+            </div>
+
+            <!-- HSBC Job -->
+            <div class="job-card">
+                <h3 class="job-title">HSBC Call Center</h3>
+                <div class="job-meta">
+                    <span class="job-meta-item">📍 مصر (Smart Village)</span>
+                    <span class="job-meta-item">🏢 عمل مكتبي</span>
+                    <span class="job-meta-item">💰 حتى 15,700 جنيه</span>
+                </div>
+                <div class="job-details">
+                    <p><strong>المتطلبات:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>إتقان اللغة الإنجليزية (مستوى B2+)</li>
+                        <li>ذكور وإناث (الحد الأقصى للعمر: 35 سنة)</li>
+                        <li>خريجين فقط / مصريين فقط</li>
+                        <li>لا تتطلب خبرة (حد أقصى سنتين بعد التخرج)</li>
+                    </ul>
+                    <p><strong>المزايا:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>الراتب: حتى 15,700 جنيه (إجمالي)</li>
+                        <li>تدريب مدفوع + تأمين طبي واجتماعي</li>
+                        <li>توفير مواصلات</li>
+                        <li>نظام العمل: 5 أيام عمل، ورديات دورانية، 9 ساعات شاملة ساعة راحة</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="applyForJob('HSBC Call Center')">تقدم الآن</button>
+            </div>
+
+            <!-- Real Estate Job -->
+            <div class="job-card">
+                <h3 class="job-title">Real Estate Acquisition Specialist</h3>
+                <div class="job-meta">
+                    <span class="job-meta-item">🌍 عمل عن بُعد عالمياً</span>
+                    <span class="job-meta-item">💰 4.2$ للساعة + عمولة</span>
+                    <span class="job-meta-item">⏰ التوقيت الأمريكي</span>
+                </div>
+                <div class="job-details">
+                    <p><strong>المتطلبات:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>مستوى إنجليزية قوي B2+</li>
+                        <li>خبرة لا تقل عن 6 أشهر في المبيعات (يُفضل العقارات)</li>
+                        <li>خبرة في المكالمات الباردة وتحديد المواعيد</li>
+                        <li>اتصال إنترنت مستقر وكمبيوتر شخصي وسماعة</li>
+                    </ul>
+                    <p><strong>المزايا:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>الراتب: 4.2$ للساعة + عمولة بالدولار</li>
+                        <li>40 ساعة أسبوعياً (8 ساعات يومياً)</li>
+                        <li>5 أيام عمل + يومين راحة</li>
+                    </ul>
+                    <p><strong>المسؤوليات:</strong></p>
+                    <ul style="padding-right: 20px;">
+                        <li>متابعة عملاء PPC والتسويق الرقمي</li>
+                        <li>جمع وتأكيد المعلومات من أصحاب المنازل</li>
+                        <li>بناء علاقات مع العملاء المحتملين</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="applyForJob('Real Estate Acquisition')">تقدم الآن</button>
+            </div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="login" class="section">
+            <div class="login-form">
+                <h2 style="color: var(--primary-color); margin-bottom: 30px;">🔐 لوحة الموظفين</h2>
+                <p style="color: #666; margin-bottom: 20px;">أدخل كلمة المرور للوصول إلى لوحة التحكم</p>
+                <div class="form-group">
+                    <label>كلمة المرور:</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="أدخل كلمة المرور">
+                </div>
+                <button class="btn btn-primary" onclick="adminLogin()">🚀 دخول</button>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div id="admin" class="section">
+            <div class="admin-panel">
+                <div class="admin-header">
+                    <h2 style="color: var(--primary-color);">🌍 لوحة إدارة المتقدمين</h2>
+                    <div>
+                        <button class="btn btn-primary" onclick="refreshData()" style="margin-left: 10px;">🔄 تحديث</button>
+                        <button class="btn btn-secondary" onclick="logout()">🚪 خروج</button>
+                    </div>
+                </div>
+                
+                <!-- Connection Status -->
+                <div id="connectionStatus" class="connection-status offline">
+                    جاري التحقق من حالة الخادم...
+                </div>
+                
+                <!-- Stats -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalApplications">0</span>
+                        <span>إجمالي الطلبات</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="pendingApplications">0</span>
+                        <span>قيد المراجعة</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="approvedApplications">0</span>
+                        <span>مقبول</span>
+                    </div>
+                </div>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>تصفية حسب الحالة:</label>
+                        <select id="statusFilter" class="form-control" onchange="filterApplicants()">
+                            <option value="all">جميع الطلبات</option>
+                            <option value="pending">قيد المراجعة</option>
+                            <option value="approved">مقبول</option>
+                            <option value="rejected">مرفوض</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>تصفية حسب الوظيفة:</label>
+                        <select id="jobFilter" class="form-control" onchange="filterApplicants()">
+                            <option value="all">جميع الوظائف</option>
+                            <option value="Concentrix Customer Service">Concentrix</option>
+                            <option value="Proof Health Customer Service">Proof Health</option>
+                            <option value="HSBC Call Center">HSBC</option>
+                            <option value="Real Estate Acquisition">Real Estate</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="applicantsList">
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading"></div>
+                        <p>جاري تحميل البيانات...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Offer 2 -->
-    <div class="job">
-      <h2>🇩🇪 German Customer Service – Concentrix</h2>
-      <p>الخريجين فقط - مصريين فقط | المرتب: من 26,000 إلى 34,000 جنيه<br>
-      بونص ترحيب 5,000 جنيه - تدريب مدفوع - مواصلات حتى باب المنزل</p>
-      <p>يرجى إرسال رسالة صوتية دقيقة بالألمانية والإنجليزية تقدم فيها نفسك.</p>
-      <button class="apply-btn" onclick="showForm('German Customer Service – Concentrix')">قدّم الآن</button>
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalJobTitle" class="modal-title"></h3>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <form id="applicationForm">
+                <div class="form-group">
+                    <label>الاسم الكامل *</label>
+                    <input type="text" id="applicantName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>البريد الإلكتروني *</label>
+                    <input type="email" id="applicantEmail" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>رقم الهاتف (مع رمز الدولة) *</label>
+                    <input type="tel" id="applicantPhone" class="form-control" placeholder="+20 1234567890" required>
+                </div>
+
+                <div class="form-group">
+                    <label>الدولة/المنطقة *</label>
+                    <select id="applicantCountry" class="form-control" required>
+                        <option value="">اختر دولتك</option>
+                        <option value="مصر">🇪🇬 مصر</option>
+                        <option value="السعودية">🇸🇦 السعودية</option>
+                        <option value="الإمارات">🇦🇪 الإمارات</option>
+                        <option value="الكويت">🇰🇼 الكويت</option>
+                        <option value="قطر">🇶🇦 قطر</option>
+                        <option value="الأردن">🇯🇴 الأردن</option>
+                        <option value="لبنان">🇱🇧 لبنان</option>
+                        <option value="سوريا">🇸🇾 سوريا</option>
+                        <option value="العراق">🇮🇶 العراق</option>
+                        <option value="المغرب">🇲🇦 المغرب</option>
+                        <option value="تونس">🇹🇳 تونس</option>
+                        <option value="الجزائر">🇩🇿 الجزائر</option>
+                        <option value="ليبيا">🇱🇾 ليبيا</option>
+                        <option value="السودان">🇸🇩 السودان</option>
+                        <option value="أخرى">🌍 دولة أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="photoGroup" style="display: none;">
+                    <label>الصورة الشخصية *</label>
+                    <input type="file" id="applicantPhoto" class="form-control" accept="image/*">
+                </div>
+                
+                <div class="form-group">
+                    <label>الخبرات والمؤهلات *</label>
+                    <textarea id="applicantExperience" class="form-control" rows="4" placeholder="اكتب خبراتك، مؤهلاتك، ولماذا أنت مناسب لهذه الوظيفة..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>تسجيل صوتي للتعريف بنفسك (باللغة الإنجليزية أو العربية) *</label>
+                    <div class="record-controls">
+                        <button type="button" class="record-btn start" id="startRecord" onclick="startRecording()">🎤 بدء التسجيل</button>
+                        <button type="button" class="record-btn stop" id="stopRecord" onclick="stopRecording()" disabled>⏹ إيقاف</button>
+                        <span id="recordingTime">00:00</span>
+                    </div>
+                    <audio id="audioPreview" class="audio-player" controls style="display: none;"></audio>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">🚀 إرسال التقديم</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ إلغاء</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Offer 3 -->
-    <div class="job">
-      <h2>🟥 English Call Center – HSBC</h2>
-      <p>الخريجين فقط - مصريين فقط | المرتب: من 9,000 إلى 15,700 جنيه<br>
-      تأمين طبي واجتماعي - تدريب مدفوع - شفتات متغيرة</p>
-      <p>يرجى إرسال رسالة صوتية باللغة الإنجليزية.</p>
-      <button class="apply-btn" onclick="showForm('English Call Center – HSBC')">قدّم الآن</button>
+    <!-- Applicant Details Modal -->
+    <div id="applicantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">تفاصيل المتقدم</h3>
+                <button class="close-modal" onclick="closeApplicantModal()">×</button>
+            </div>
+            <div id="applicantModalContent">
+                <!-- Content will be filled dynamically -->
+            </div>
+        </div>
     </div>
 
-    <!-- Offer 4 -->
-    <div class="job">
-      <h2>🌐 Acquisition – Volume X (Remote)</h2>
-      <p>دوام كامل من المنزل | $4.2/ساعة + عمولة 💲<br>
-      مطلوب مستوى إنجليزي قوي + خبرة 6 شهور مبيعات</p>
-      <p>أرسل رسالة صوتية باللغة الإنجليزية تقدم فيها نفسك.</p>
-      <button class="apply-btn" onclick="showForm('Acquisition – Volume X')">قدّم الآن</button>
-    </div>
+    <script>
+        // Supabase Configuration
+        const supabaseUrl = 'https://yjumbkfpnnujdrxlgauj.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqdW1ia2Zwbm51amRyeGxnYXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTQ4MTksImV4cCI6MjA2OTk3MDgxOX0.YxzZ7ZDeKHpGEuAzxuDqgbSYbFQxle-GhDlJ6PaZDOc';
+        
+        // Initialize Supabase client
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Global variables
+        let isSupabaseConnected = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingInterval;
+        let secondsRecording = 0;
+        let audioBlob = null;
+        let allApplications = [];
 
-    <!-- Application Form -->
-    <div id="formContainer" class="form-container">
-      <h3>فورم التقديم على الوظيفة</h3>
-      <form id="applyForm">
-        <input type="text" id="name" placeholder="الاسم بالكامل" required />
-        <input type="email" id="email" placeholder="البريد الإلكتروني" required />
-        <input type="tel" id="phone" placeholder="رقم الهاتف" required />
-        <input type="file" id="record" accept="audio/*" required />
-        <textarea id="message" placeholder="رسالة أو خبرة سابقة..." required></textarea>
-        <input type="hidden" id="job" />
-        <button type="submit">إرسال الطلب</button>
-      </form>
-    </div>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const supabase = createClient(
-      'https://yjumbkfpnnujdrxlgauj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqdW1ia2Zwbm51amRyeGxnYXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTQ4MTksImV4cCI6MjA2OTk3MDgxOX0.YxzZ7ZDeKHpGEuAzxuDqgbSYbFQxle-GhDlJ6PaZDOc'
-    );
-
-    function showForm(jobName) {
-      document.getElementById('formContainer').style.display = 'block';
-      document.getElementById('job').value = jobName;
-      window.scrollTo(0, document.body.scrollHeight);
-    }
-
-    document.getElementById('applyForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const phone = document.getElementById('phone').value;
-      const message = document.getElementById('message').value;
-      const job = document.getElementById('job').value;
-      const file = document.getElementById('record').files[0];
-
-      if (!file) return alert("يرجى رفع الرسالة الصوتية");
-
-      const fileName = `${Date.now()}_${file.name}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from('records')
-        .upload(fileName, file);
-
-      if (uploadError) return alert("فشل في رفع الملف الصوتي");
-
-      const { error } = await supabase.from('applications').insert([
-        {
-          name, email, phone, message, job, record_url: data.path
+        // Initialize Supabase connection
+        async function initSupabase() {
+            try {
+                // Test connection by fetching a dummy record
+                const { data, error } = await supabase
+                    .from('applications')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    console.error('فشل الاتصال بـ Supabase:', error);
+                    isSupabaseConnected = false;
+                    updateConnectionStatus(false);
+                    return false;
+                }
+                
+                isSupabaseConnected = true;
+                updateConnectionStatus(true);
+                return true;
+            } catch (error) {
+                console.error('فشل الاتصال بـ Supabase:', error);
+                isSupabaseConnected = false;
+                updateConnectionStatus(false);
+                return false;
+            }
         }
-      ]);
 
-      if (error) return alert("حدث خطأ في حفظ البيانات");
-      alert("تم إرسال طلبك بنجاح ✅");
-      document.getElementById('applyForm').reset();
-      document.getElementById('formContainer').style.display = 'none';
-    });
-  </script>
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = '✓ متصل بالخادم بنجاح';
+                statusElement.className = 'connection-status online';
+            } else {
+                statusElement.textContent = '✗ غير متصل بالخادم - يتم العمل بالنظام المحلي';
+                statusElement.className = 'connection-status offline';
+            }
+        }
+
+        // Fetch all job applications
+        async function fetchApplications() {
+            try {
+                const { data, error } = await supabase
+                    .from('applications')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                allApplications = data || [];
+                updateStats();
+                return allApplications;
+            } catch (error) {
+                console.error('Error fetching applications:', error);
+                showNotification('حدث خطأ أثناء جلب البيانات', 'error');
+                return [];
+            }
+        }
+
+        // Add new application
+        async function addApplication(application) {
+            try {
+                // Upload audio file if available
+                let audioUrl = null;
+                if (application.audioBlob) {
+                    const fileName = `audio-${Date.now()}.mp3`;
+                    const { data, error } = await supabase.storage
+                        .from('applications')
+                        .upload(`audio/${fileName}`, application.audioBlob, {
+                            contentType: 'audio/mp3'
+                        });
+                    
+                    if (error) throw error;
+                    
+                    // Get public URL
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('applications')
+                        .getPublicUrl(`audio/${fileName}`);
+                    
+                    audioUrl = publicUrl;
+                }
+                
+                // Insert application record
+                const { data, error } = await supabase
+                    .from('applications')
+                    .insert([{
+                        job_title: application.jobTitle,
+                        name: application.name,
+                        email: application.email,
+                        phone: application.phone,
+                        country: application.country,
+                        experience: application.experience,
+                        audio_url: audioUrl,
+                        status: 'pending'
+                    }]);
+                
+                if (error) throw error;
+                
+                return data;
+            } catch (error) {
+                console.error('Error adding application:', error);
+                throw error;
+            }
+        }
+
+        // Update application status
+        async function updateApplicationStatus(id, status) {
+            try {
+                const { error } = await supabase
+                    .from('applications')
+                    .update({ status })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                return true;
+            } catch (error) {
+                console.error('Error updating status:', error);
+                return false;
+            }
+        }
+
+        // Update stats counters
+        function updateStats() {
+            document.getElementById('totalApplications').textContent = allApplications.length;
+            document.getElementById('pendingApplications').textContent = allApplications.filter(a => a.status === 'pending').length;
+            document.getElementById('approvedApplications').textContent = allApplications.filter(a => a.status === 'approved').length;
+        }
+
+        // Filter applicants based on selection
+        function filterApplicants() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const jobFilter = document.getElementById('jobFilter').value;
+            
+            let filtered = [...allApplications];
+            
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(app => app.status === statusFilter);
+            }
+            
+            if (jobFilter !== 'all') {
+                filtered = filtered.filter(app => app.job_title === jobFilter);
+            }
+            
+            renderApplicants(filtered);
+        }
+
+        // Page Functions
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            
+            if (sectionId === 'admin') {
+                loadApplicants();
+            }
+        }
+
+        function applyForJob(jobTitle) {
+            document.getElementById('modalJobTitle').textContent = jobTitle;
+            document.getElementById('applicationModal').classList.add('active');
+            document.getElementById('photoGroup').style.display = jobTitle.includes('Concentrix') ? 'block' : 'none';
+            resetApplicationForm();
+        }
+
+        function closeModal() {
+            document.getElementById('applicationModal').classList.remove('active');
+            stopRecording();
+        }
+
+        function closeApplicantModal() {
+            document.getElementById('applicantModal').classList.remove('active');
+        }
+
+        function resetApplicationForm() {
+            document.getElementById('applicationForm').reset();
+            document.getElementById('audioPreview').style.display = 'none';
+            document.getElementById('audioPreview').src = '';
+            audioChunks = [];
+            audioBlob = null;
+            secondsRecording = 0;
+            document.getElementById('recordingTime').textContent = '00:00';
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                
+                mediaRecorder.ondataavailable = e => {
+                    audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPreview = document.getElementById('audioPreview');
+                    audioPreview.src = audioUrl;
+                    audioPreview.style.display = 'block';
+                    
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                document.getElementById('startRecord').disabled = true;
+                document.getElementById('stopRecord').disabled = false;
+                
+                secondsRecording = 0;
+                recordingInterval = setInterval(() => {
+                    secondsRecording++;
+                    const minutes = Math.floor(secondsRecording / 60).toString().padStart(2, '0');
+                    const seconds = (secondsRecording % 60).toString().padStart(2, '0');
+                    document.getElementById('recordingTime').textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            } catch (err) {
+                showNotification('لا يمكن الوصول إلى الميكروفون. يرجى التحقق من الأذونات.', 'error');
+                console.error('Recording error:', err);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                clearInterval(recordingInterval);
+                document.getElementById('startRecord').disabled = false;
+                document.getElementById('stopRecord').disabled = true;
+            }
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'workwise12345') {
+                showSection('admin');
+                showNotification('تم تسجيل الدخول بنجاح!', 'success');
+            } else {
+                showNotification('كلمة المرور غير صحيحة!', 'error');
+            }
+        }
+
+        function logout() {
+            showSection('jobs');
+            document.getElementById('adminPassword').value = '';
+            showNotification('تم تسجيل الخروج بنجاح', 'success');
+        }
+
+        async function loadApplicants() {
+            const applicantsList = document.getElementById('applicantsList');
+            applicantsList.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p>جاري تحميل البيانات...</p></div>';
+            
+            try {
+                allApplications = await fetchApplications();
+                renderApplicants(allApplications);
+            } catch (error) {
+                console.error('Error loading applicants:', error);
+            }
+        }
+
+        function renderApplicants(applicants) {
+            const applicantsList = document.getElementById('applicantsList');
+            
+            if (!applicants || applicants.length === 0) {
+                applicantsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">لا توجد طلبات تقديم</div>';
+                return;
+            }
+            
+            applicantsList.innerHTML = '';
+            
+            applicants.forEach(applicant => {
+                const statusClass = {
+                    'pending': 'status-pending',
+                    'approved': 'status-approved',
+                    'rejected': 'status-rejected'
+                }[applicant.status];
+                
+                const statusText = {
+                    'pending': 'قيد المراجعة',
+                    'approved': 'مقبول',
+                    'rejected': 'مرفوض'
+                }[applicant.status];
+                
+                const applicantCard = document.createElement('div');
+                applicantCard.className = 'applicant-card';
+                applicantCard.innerHTML = `
+                    <h3>${applicant.name}</h3>
+                    <p><strong>الوظيفة:</strong> ${applicant.job_title}</p>
+                    <p><strong>البريد:</strong> ${applicant.email}</p>
+                    <p><strong>الهاتف:</strong> ${applicant.phone}</p>
+                    <p><strong>الدولة:</strong> ${applicant.country}</p>
+                    <p><strong>التاريخ:</strong> ${new Date(applicant.created_at).toLocaleString('ar-EG')}</p>
+                    <p><strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
+                    
+                    <div class="applicant-actions">
+                        <button class="btn btn-success" onclick="updateStatus('${applicant.id}', 'approved')">✅ قبول</button>
+                        <button class="btn btn-danger" onclick="updateStatus('${applicant.id}', 'rejected')">❌ رفض</button>
+                        <button class="btn btn-warning" onclick="viewApplicantDetails('${applicant.id}')">👁 التفاصيل</button>
+                    </div>
+                `;
+                
+                applicantsList.appendChild(applicantCard);
+            });
+        }
+
+        async function updateStatus(id, status) {
+            const success = await updateApplicationStatus(id, status);
+            if (success) {
+                // Update local data
+                const appIndex = allApplications.findIndex(app => app.id === id);
+                if (appIndex !== -1) {
+                    allApplications[appIndex].status = status;
+                    renderApplicants(allApplications);
+                    updateStats();
+                }
+                showNotification('تم تحديث حالة الطلب بنجاح', 'success');
+            } else {
+                showNotification('حدث خطأ أثناء تحديث الحالة', 'error');
+            }
+        }
+
+        async function viewApplicantDetails(id) {
+            const applicant = allApplications.find(app => app.id === id);
+            if (!applicant) return;
+            
+            const modalContent = document.getElementById('applicantModalContent');
+            modalContent.innerHTML = `
+                <div class="applicant-details">
+                    <p><strong>الاسم:</strong> ${applicant.name}</p>
+                    <p><strong>الوظيفة:</strong> ${applicant.job_title}</p>
+                    <p><strong>البريد الإلكتروني:</strong> ${applicant.email}</p>
+                    <p><strong>رقم الهاتف:</strong> ${applicant.phone}</p>
+                    <p><strong>الدولة:</strong> ${applicant.country}</p>
+                    <p><strong>تاريخ التقديم:</strong> ${new Date(applicant.created_at).toLocaleString('ar-EG')}</p>
+                    <p><strong>الحالة:</strong> <span class="status-badge ${applicant.status === 'pending' ? 'status-pending' : applicant.status === 'approved' ? 'status-approved' : 'status-rejected'}">
+                        ${applicant.status === 'pending' ? 'قيد المراجعة' : applicant.status === 'approved' ? 'مقبول' : 'مرفوض'}
+                    </span></p>
+                    
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: var(--primary-color);">الخبرات والمؤهلات:</h4>
+                        <p>${applicant.experience}</p>
+                    </div>
+                    
+                    ${applicant.audio_url ? `
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: var(--primary-color);">التسجيل الصوتي:</h4>
+                        <audio src="${applicant.audio_url}" controls class="audio-player"></audio>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('applicantModal').classList.add('active');
+        }
+
+        async function refreshData() {
+            showNotification('جاري تحديث البيانات...', 'warning');
+            try {
+                allApplications = await fetchApplications();
+                renderApplicants(allApplications);
+                showNotification('تم تحديث البيانات بنجاح', 'success');
+            } catch (error) {
+                showNotification('حدث خطأ أثناء تحديث البيانات', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submission
+        document.getElementById('applicationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const jobTitle = document.getElementById('modalJobTitle').textContent;
+            const name = document.getElementById('applicantName').value;
+            const email = document.getElementById('applicantEmail').value;
+            const phone = document.getElementById('applicantPhone').value;
+            const country = document.getElementById('applicantCountry').value;
+            const experience = document.getElementById('applicantExperience').value;
+            const audioPreview = document.getElementById('audioPreview');
+            
+            if (!audioPreview.src) {
+                showNotification('يجب تسجيل مقدمة صوتية', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'جاري الإرسال... <div class="loading"></div>';
+            
+            try {
+                const application = {
+                    jobTitle,
+                    name,
+                    email,
+                    phone,
+                    country,
+                    experience,
+                    audioBlob: audioBlob
+                };
+                
+                await addApplication(application);
+                showNotification('تم تقديم طلبك بنجاح! سنتواصل معك قريباً.', 'success');
+                closeModal();
+            } catch (error) {
+                showNotification('حدث خطأ أثناء تقديم الطلب. يرجى المحاولة مرة أخرى.', 'error');
+                console.error('Application error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 إرسال التقديم';
+            }
+        });
+
+        // Initialize Supabase connection when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initSupabase();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showNotification('مرحباً بك في WorkWise - منصة التوظيف العالمية!', 'success');
+            }, 1000);
+        });
+    </script>
 </body>
-</html>
+                                                    </html>
