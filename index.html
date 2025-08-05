@@ -15,6 +15,7 @@
             --warning-color: #ff9800;
             --light-color: #f8f9fa;
             --dark-color: #212529;
+            --success-color: #28a745;
         }
 
         * {
@@ -29,6 +30,7 @@
             min-height: 100vh;
             color: var(--dark-color);
             line-height: 1.6;
+            padding: 20px;
         }
 
         .logo-bg {
@@ -47,7 +49,6 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
             position: relative;
             z-index: 1;
         }
@@ -129,7 +130,7 @@
         }
 
         .btn-success {
-            background: var(--accent-color);
+            background: var(--success-color);
             color: white;
         }
 
@@ -425,6 +426,10 @@
             color: var(--dark-color);
         }
 
+        .notification.success {
+            background: var(--success-color);
+        }
+
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -453,6 +458,7 @@
             font-weight: bold;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .connection-status.online {
@@ -502,6 +508,49 @@
             min-width: 200px;
         }
 
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            margin: 10px 0;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .bar {
+            flex: 1;
+            background: var(--primary-color);
+            min-height: 1px;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.2s ease;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background-color: var(--success-color);
+        }
+
+        .status-offline {
+            background-color: var(--danger-color);
+        }
+
         @media (max-width: 768px) {
             .nav-buttons {
                 flex-direction: column;
@@ -529,6 +578,10 @@
             .btn {
                 padding: 10px 15px;
                 min-width: 100%;
+            }
+            
+            body {
+                padding: 10px;
             }
         }
     </style>
@@ -659,6 +712,11 @@
                     </ul>
                 </div>
                 <button class="btn btn-primary" onclick="applyForJob('Real Estate Acquisition')">تقدم الآن</button>
+            </div>
+            
+            <div class="server-status">
+                <div class="status-dot" id="serverDot"></div>
+                <span id="serverStatusText">جاري التحقق من حالة الخادم...</span>
             </div>
         </div>
 
@@ -796,6 +854,18 @@
                 
                 <div class="form-group">
                     <label>تسجيل صوتي للتعريف بنفسك (باللغة الإنجليزية أو العربية) *</label>
+                    <div class="audio-visualizer" id="audioVisualizer">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
                     <div class="record-controls">
                         <button type="button" class="record-btn start" id="startRecord" onclick="startRecording()">🎤 بدء التسجيل</button>
                         <button type="button" class="record-btn stop" id="stopRecord" onclick="stopRecording()" disabled>⏹ إيقاف</button>
@@ -831,7 +901,7 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqdW1ia2Zwbm51amRyeGxnYXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzOTQ4MTksImV4cCI6MjA2OTk3MDgxOX0.YxzZ7ZDeKHpGEuAzxuDqgbSYbFQxle-GhDlJ6PaZDOc';
         
         // Initialize Supabase client
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // Global variables
         let isSupabaseConnected = false;
@@ -842,27 +912,31 @@
         let audioBlob = null;
         let allApplications = [];
         let stream;
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let animationId;
 
         // Initialize Supabase connection
         async function initSupabase() {
             try {
-                // Test connection using auth.signInAnonymously()
-                const { error } = await supabase.auth.signInAnonymously();
+                // Test connection
+                const { data, error } = await supabase
+                    .from('applications')
+                    .select('*')
+                    .limit(1);
                 
-                if (error) {
-                    console.error('فشل الاتصال بـ Supabase:', error);
-                    isSupabaseConnected = false;
-                    updateConnectionStatus(false);
-                    return false;
-                }
+                if (error) throw error;
                 
                 isSupabaseConnected = true;
                 updateConnectionStatus(true);
+                updateServerStatus(true);
                 return true;
             } catch (error) {
                 console.error('فشل الاتصال بـ Supabase:', error);
                 isSupabaseConnected = false;
                 updateConnectionStatus(false);
+                updateServerStatus(false);
                 return false;
             }
         }
@@ -875,6 +949,19 @@
             } else {
                 statusElement.textContent = '✗ غير متصل بالخادم - يتم العمل بالنظام المحلي';
                 statusElement.className = 'connection-status offline';
+            }
+        }
+
+        function updateServerStatus(online) {
+            const dot = document.getElementById('serverDot');
+            const text = document.getElementById('serverStatusText');
+            
+            if (online) {
+                dot.className = 'status-dot status-online';
+                text.textContent = 'الخادم متصل ويعمل بشكل طبيعي';
+            } else {
+                dot.className = 'status-dot status-offline';
+                text.textContent = 'الخادم غير متصل - جاري العمل في وضع عدم الاتصال';
             }
         }
 
@@ -904,11 +991,12 @@
                 // Upload audio file if available
                 let audioUrl = null;
                 if (application.audioBlob) {
-                    const fileName = `audio-${Date.now()}.mp3`;
+                    const fileName = `audio-${Date.now()}.webm`;
                     const { data, error } = await supabase.storage
                         .from('applications')
                         .upload(`audio/${fileName}`, application.audioBlob, {
-                            contentType: 'audio/mp3'
+                            contentType: 'audio/webm',
+                            upsert: true
                         });
                     
                     if (error) throw error;
@@ -1024,6 +1112,22 @@
             document.getElementById('recordingTime').textContent = '00:00';
         }
 
+        // Visualize audio
+        function visualizeAudio() {
+            if (!analyser) return;
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            const bars = document.querySelectorAll('#audioVisualizer .bar');
+            bars.forEach((bar, i) => {
+                const value = dataArray[i] || 0;
+                const height = Math.max(1, value / 2);
+                bar.style.height = `${height}px`;
+            });
+            
+            animationId = requestAnimationFrame(visualizeAudio);
+        }
+
         async function startRecording() {
             try {
                 // Check if we already have a stream
@@ -1034,9 +1138,22 @@
                 // Reset chunks
                 audioChunks = [];
                 
-                // Create new MediaRecorder with supported MIME type
-                const options = { mimeType: 'audio/webm' };
-                mediaRecorder = new MediaRecorder(stream, options);
+                // Create audio context for visualization
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                analyser.fftSize = 32;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Start visualization
+                visualizeAudio();
+                
+                // Create new MediaRecorder
+                mediaRecorder = new MediaRecorder(stream, { 
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 128000
+                });
                 
                 mediaRecorder.ondataavailable = e => {
                     if (e.data.size > 0) {
@@ -1045,6 +1162,7 @@
                 };
                 
                 mediaRecorder.onstop = () => {
+                    cancelAnimationFrame(animationId);
                     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     const audioUrl = URL.createObjectURL(audioBlob);
                     const audioPreview = document.getElementById('audioPreview');
@@ -1076,6 +1194,12 @@
                 clearInterval(recordingInterval);
                 document.getElementById('startRecord').disabled = false;
                 document.getElementById('stopRecord').disabled = true;
+                
+                // Stop audio context
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
             }
         }
 
@@ -1264,7 +1388,7 @@
                 console.error('Application error:', error);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = '🚀 إرسال التقديم';
+                submitBtn.innerHTML = '🚀 إرسال التقديم';
             }
         });
 
